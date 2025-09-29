@@ -1,13 +1,13 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { CreateBookDto } from './dto/create-book.dto';
 
 @Controller('books')
 export class BooksController {
-
   @Get()
   getAllBooks() {
     return [
       { id: 1, title: 'Война и мир' },
-      { id: 2, title: 'Преступление и наказание' }
+      { id: 2, title: 'Преступление и наказание' },
     ];
   }
 
@@ -22,7 +22,7 @@ export class BooksController {
   }
 
   @Post()
-  createBook(@Body() bookData: any) {
-    return { message: 'Книга создана', data: bookData };
+  createBook(@Body() createBookDto: CreateBookDto) {
+    return { message: 'Книга создана', data: createBookDto };
   }
 }
