@@ -1,13 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { BooksController } from './books/books.controller';
-import { MessagesController } from './message/nestjs_controller';
-import { MessagesService } from './message/messages.service';
-import { MessagesGateway } from './message/nestjs_gateway';
+import { MessagesModule } from './modules/messages/messages.module';
+import { BooksModule } from './modules/books/books.module';
+import appConfig from './config/app.config';
 
 @Module({
-  imports: [ConfigModule.forRoot()],
-  controllers: [BooksController, MessagesController],
-  providers: [MessagesService, MessagesGateway],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [appConfig],
+      envFilePath: ['.env.local', '.env'],
+    }),
+    MessagesModule,
+    BooksModule,
+  ],
 })
 export class AppModule {}
