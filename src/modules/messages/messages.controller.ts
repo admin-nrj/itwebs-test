@@ -27,8 +27,8 @@ export class MessagesController {
   }
 
   @Get(':id')
-  getMessageById(@Param('id', ParseIntPipe) id: number) {
-    const message = this.messagesService.findOne(id);
+  async getMessageById(@Param('id', ParseIntPipe) id: number) {
+    const message = await this.messagesService.findOne(id);
     if (!message) {
       throw new NotFoundException(`Сообщение с ID ${id} не найдено`);
     }
@@ -47,8 +47,8 @@ export class MessagesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteMessage(@Param('id', ParseIntPipe) id: number) {
-    const deleted = this.messagesService.delete(id);
+  async deleteMessage(@Param('id', ParseIntPipe) id: number) {
+    const deleted = await this.messagesService.delete(id);
     if (!deleted) {
       throw new NotFoundException(`Сообщение с ID ${id} не найдено`);
     }

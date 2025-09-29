@@ -1,44 +1,29 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { Message } from './entities/message.entity';
 import { CreateMessageDto } from './dto/create-message.dto';
+import type { MessagesRepositoryInterface } from '../../dal/interfaces/messages-repository.interface';
+import { MESSAGES_REPOSITORY_TOKEN } from '../../dal/tokens/repository.tokens';
 
 @Injectable()
 export class MessagesService {
-  private messages: Message[] = [
-    {
-      id: 1,
-      text: 'Привет! Это первое сообщение',
-      author: 'Система',
-      timestamp: new Date(),
-    },
-  ];
-  private currentId = 2;
+  constructor(
+    @Inject(MESSAGES_REPOSITORY_TOKEN)
+    private readonly messagesRepository: MessagesRepositoryInterface,
+  ) {}
 
-  findAll(): Message[] {
-    return this.messages;
+  async findAll(): Promise<Message[]> {
+    return await this.messagesRepository.findAll();
   }
 
-  findOne(id: number): Message | undefined {
-    return this.messages.find((msg) => msg.id === id);
+  async findOne(id: number): Promise<Message | null> {
+    return await this.messagesRepository.findById(id);
   }
 
   create(createMessageDto: CreateMessageDto): Message {
-    const message: Message = {
-      id: this.currentId++,
-      text: createMessageDto.text,
-      author: createMessageDto.author,
-      timestamp: new Date(),
-    };
-    this.messages.push(message);
-    return message;
+    return this.messagesRepository.createMessage(createMessageDto);
   }
 
-  delete(id: number): boolean {
-    const index = this.messages.findIndex((msg) => msg.id === id);
-    if (index !== -1) {
-      this.messages.splice(index, 1);
-      return true;
-    }
-    return false;
+  async delete(id: number): Promise<boolean> {
+    return await this.messagesRepository.delete(id);
   }
 }
