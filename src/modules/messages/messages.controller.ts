@@ -22,19 +22,18 @@ import { UserRole } from '../../common/enums/user-role.enum';
 import type { AuthUser } from '../auth/interfaces/auth-user.interface';
 
 @Controller('messages')
+@UseGuards(JwtAuthGuard)
 export class MessagesController {
   constructor(
     private readonly messagesService: MessagesService,
     private readonly messagesGateway: MessagesGateway,
   ) {}
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   getAllMessages() {
     return this.messagesService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async getMessageById(@Param('id', ParseIntPipe) id: number) {
     const message = await this.messagesService.findOne(id);
@@ -44,7 +43,6 @@ export class MessagesController {
     return message;
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async createMessage(@Body() createMessageDto: CreateMessageDto, @CurrentUser() user: AuthUser) {
@@ -55,7 +53,7 @@ export class MessagesController {
     return message;
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

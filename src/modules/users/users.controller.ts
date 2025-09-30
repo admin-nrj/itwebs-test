@@ -22,10 +22,11 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -33,26 +34,26 @@ export class UsersController {
     return await this.usersService.create(createUserDto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @Get()
   async findAll(): Promise<UserResponseDto[]> {
     return await this.usersService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard, OwnerOrAdminGuard)
+  @UseGuards(OwnerOrAdminGuard)
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<UserResponseDto> {
     return await this.usersService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard, OwnerOrAdminGuard)
+  @UseGuards(OwnerOrAdminGuard)
   @Patch(':id')
   async update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
     return await this.usersService.update(id, updateUserDto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
