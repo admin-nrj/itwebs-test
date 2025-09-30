@@ -1,59 +1,45 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
 import { Message } from '../../modules/messages/entities/message.entity';
+import { User } from '../../modules/users/entities/user.entity';
 import { MessagesRepositoryInterface } from '../interfaces/messages-repository.interface';
-import { CreateMessageDto } from '../../modules/messages/dto/create-message.dto';
 
 @Injectable()
 export class MessagesRepository implements MessagesRepositoryInterface {
-  private messages: Message[] = [
-    {
-      id: 1,
-      text: 'Привет! Это первое сообщение',
-      author: 'Система',
-      timestamp: new Date(),
-    },
-  ];
-  private currentId = 2;
+  constructor(
+    @InjectModel(Message)
+    private readonly messageModel: typeof Message,
+  ) {}
 
   async findAll(): Promise<Message[]> {
-    return Promise.resolve(this.messages);
+    return await this.messageModel.findAll({
+      order: [['createdAt', 'DESC']],
+    });
+  }
+
+  async findAllWithUsers(): Promise<Message[]> {
+    return await this.messageModel.findAll({
+      include: [{ model: User, attributes: ['userId', 'name', 'email'] }],
+      order: [['createdAt', 'DESC']],
+    });
   }
 
   async findById(id: number): Promise<Message | null> {
-    return Promise.resolve(this.messages.find((msg) => msg.id === id) || null);
+    return await this.messageModel.findByPk(id, {
+      include: [{ model: User, attributes: ['userId', 'name', 'email'] }],
+    });
   }
 
-  async create(data: Partial<Message>): Promise<Message> {
-    const message: Message = {
-      id: this.currentId++,
-      text: data.text!,
-      author: data.author!,
-      timestamp: new Date(),
-    };
-    this.messages.push(message);
-
-    return Promise.resolve(message);
+  async create(data: Message): Promise<Message> {
+    return await this.messageModel.create(data);
   }
 
-  createMessage(createMessageDto: CreateMessageDto): Message {
-    const message: Message = {
-      id: this.currentId++,
-      text: createMessageDto.text,
-      author: createMessageDto.author,
-      timestamp: new Date(),
-    };
-    this.messages.push(message);
-
-    return message;
+  async createMessage(text: string, userId: number): Promise<Message> {
+    return await this.messageModel.create({ text, userId });
   }
 
   async delete(id: number): Promise<boolean> {
-    const index = this.messages.findIndex((msg) => msg.id === id);
-    if (index !== -1) {
-      this.messages.splice(index, 1);
-      return true;
-    }
-
-    return Promise.resolve(false);
+    const result = await this.messageModel.destroy({ where: { messageId: id } });
+    return result > 0;
   }
 }

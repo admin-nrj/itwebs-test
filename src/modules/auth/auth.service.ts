@@ -10,7 +10,6 @@ import { JwtPayload } from './strategies/jwt.strategy';
 import { AuthUser } from './interfaces/auth-user.interface';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { User } from '../users/entities/user.entity';
-import jwtConfig from '../../config/jwt.config';
 import appConfig from '../../config/app.config';
 
 @Injectable()
@@ -19,8 +18,6 @@ export class AuthService {
     @Inject(USERS_REPOSITORY_TOKEN)
     private readonly usersRepository: UsersRepositoryInterface,
     private readonly jwtService: JwtService,
-    @Inject(jwtConfig.KEY)
-    private jwt: ConfigType<typeof jwtConfig>,
     @Inject(appConfig.KEY)
     private app: ConfigType<typeof appConfig>,
   ) {}

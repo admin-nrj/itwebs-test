@@ -8,9 +8,16 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { MessagesService } from './messages.service';
-import { CreateMessageDto } from './dto/create-message.dto';
+import { WsJwtAuthGuard } from '../../common/guards/ws-jwt-auth.guard';
+import type { AuthUser } from '../auth/interfaces/auth-user.interface';
+
+interface SocketWithAuth extends Socket {
+  data: {
+    user?: AuthUser;
+  };
+}
 
 @WebSocketGateway({
   cors: {
@@ -40,11 +47,13 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.server.emit('userCount', { count: this.activeUsers });
   }
 
+  @UseGuards(WsJwtAuthGuard)
   @SubscribeMessage('sendMessage')
-  handleSendMessage(@MessageBody() createMessageDto: CreateMessageDto, @ConnectedSocket() client: Socket) {
-    this.logger.log(`📨 Получено сообщение от ${client.id}: ${JSON.stringify(createMessageDto)}`);
+  async handleSendMessage(@MessageBody() data: { text: string }, @ConnectedSocket() client: SocketWithAuth) {
+    const user = client.data.user as AuthUser;
+    this.logger.log(`📨 Получено сообщение от пользователя ${user.name} (${user.userId}): ${data.text}`);
 
-    const message = this.messagesService.create(createMessageDto);
+    const message = await this.messagesService.create(data.text, user.userId);
 
     this.server.emit('newMessage', message);
 
@@ -52,14 +61,16 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   @SubscribeMessage('requestMessages')
-  handleRequestMessages(@ConnectedSocket() client: Socket) {
-    const messages = this.messagesService.findAll();
+  async handleRequestMessages(@ConnectedSocket() client: Socket) {
+    const messages = await this.messagesService.findAll();
     client.emit('allMessages', messages);
     return { success: true };
   }
 
+  @UseGuards(WsJwtAuthGuard)
   @SubscribeMessage('typing')
-  handleTyping(@MessageBody() data: { author: string; isTyping: boolean }, @ConnectedSocket() client: Socket) {
-    client.broadcast.emit('userTyping', data);
+  handleTyping(@MessageBody() data: { isTyping: boolean }, @ConnectedSocket() client: SocketWithAuth) {
+    const user = client.data.user as AuthUser;
+    client.broadcast.emit('userTyping', { userName: user.name, isTyping: data.isTyping });
   }
 }

@@ -1,6 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Message } from './entities/message.entity';
-import { CreateMessageDto } from './dto/create-message.dto';
 import type { MessagesRepositoryInterface } from '../../dal/interfaces/messages-repository.interface';
 import { MESSAGES_REPOSITORY_TOKEN } from '../../dal/tokens/repository.tokens';
 
@@ -19,8 +18,8 @@ export class MessagesService {
     return await this.messagesRepository.findById(id);
   }
 
-  create(createMessageDto: CreateMessageDto): Message {
-    return this.messagesRepository.createMessage(createMessageDto);
+  async create(text: string, userId: number): Promise<Message> {
+    return await this.messagesRepository.createMessage(text, userId);
   }
 
   async delete(id: number): Promise<boolean> {

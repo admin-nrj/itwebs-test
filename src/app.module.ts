@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MessagesModule } from './modules/messages/messages.module';
-import { BooksModule } from './modules/books/books.module';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
@@ -18,7 +17,6 @@ import { AuthModule } from './modules/auth/auth.module';
       envFilePath: ['.env.local', '.env'],
     }),
     MessagesModule,
-    BooksModule,
     DatabaseModule,
     FilesModule,
     UsersModule,
