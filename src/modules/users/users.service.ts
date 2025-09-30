@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
+import type { ConfigType } from '@nestjs/config';
 import { User } from './entities/user.entity';
 import type { UsersRepositoryInterface } from '../../dal/interfaces/users-repository.interface';
 import { USERS_REPOSITORY_TOKEN } from '../../dal/tokens/repository.tokens';
@@ -6,13 +7,15 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import * as bcrypt from 'bcrypt';
-const saltRounds = 10;
+import appConfig from '../../config/app.config';
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject(USERS_REPOSITORY_TOKEN)
     private readonly usersRepository: UsersRepositoryInterface,
+    @Inject(appConfig.KEY)
+    private app: ConfigType<typeof appConfig>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
@@ -21,7 +24,7 @@ export class UsersService {
       throw new ConflictException(`Пользователь с email ${createUserDto.email} уже существует`);
     }
 
-    const salt = await bcrypt.genSalt(saltRounds);
+    const salt = await bcrypt.genSalt(this.app.bcryptSaltRounds);
     const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
 
     const user = await this.usersRepository.create({
@@ -60,7 +63,7 @@ export class UsersService {
 
     const updateData: Partial<User> = { ...updateUserDto };
     if (updateUserDto.password) {
-      const salt = await bcrypt.genSalt();
+      const salt = await bcrypt.genSalt(this.app.bcryptSaltRounds);
       updateData.password = await bcrypt.hash(updateUserDto.password, salt);
     }
 

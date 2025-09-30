@@ -6,4 +6,5 @@ export default registerAs('app', () => ({
   environment: process.env.NODE_ENV || 'development',
   globalPrefix: process.env.GLOBAL_PREFIX || 'api',
   uploadFolder: path.join(process.cwd(), `./${process.env.UPLOAD_FILES_FOLDER || './uploads'}`),
+  bcryptSaltRounds: process.env.NODE_ENV === 'production' ? 10 : 0,
 }));
