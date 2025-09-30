@@ -77,7 +77,7 @@ export class UsersService {
       throw new NotFoundException(`Пользователь с ID ${userId} не найден`);
     }
 
-    await this.usersRepository.delete(userId);
+    await this.usersRepository.updateUser(userId, { ...user, isActive: false });
   }
 
   private toResponseDto(user: User): UserResponseDto {

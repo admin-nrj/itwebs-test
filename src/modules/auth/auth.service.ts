@@ -8,6 +8,7 @@ import { AuthResponseDto } from './dto/auth-response.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
 import { AuthUser } from './interfaces/auth-user.interface';
+import { UserRole } from '../../common/enums/user-role.enum';
 import { User } from '../users/entities/user.entity';
 import jwtConfig from '../../config/jwt.config';
 import appConfig from '../../config/app.config';
@@ -61,7 +62,7 @@ export class AuthService {
       name: registerDto.email.split('@')[0],
       email: registerDto.email,
       password: hashedPassword,
-      role: 'user',
+      role: UserRole.USER,
       isActive: true,
     } as User);
 

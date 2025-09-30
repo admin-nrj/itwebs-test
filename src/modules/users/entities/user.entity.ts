@@ -1,10 +1,11 @@
 import { Column, Model, Table, DataType, PrimaryKey, AutoIncrement } from 'sequelize-typescript';
+import { UserRole } from '../../../common/enums/user-role.enum';
 
 export interface UserCreationAttributes {
   name: string;
   email: string;
   password: string;
-  role?: 'admin' | 'user';
+  role?: UserRole;
   isActive?: boolean;
 }
 
@@ -27,8 +28,8 @@ export class User extends Model<User, UserCreationAttributes> {
   @Column({ type: DataType.STRING, allowNull: false })
   declare password: string;
 
-  @Column({ type: DataType.ENUM('admin', 'user'), allowNull: false, defaultValue: 'user' })
-  declare role: 'admin' | 'user';
+  @Column({ type: DataType.ENUM(UserRole.ADMIN, UserRole.USER), allowNull: false, defaultValue: UserRole.USER })
+  declare role: UserRole;
 
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
   declare isActive: boolean;

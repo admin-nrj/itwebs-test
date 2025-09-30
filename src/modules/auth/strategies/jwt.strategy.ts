@@ -5,13 +5,14 @@ import type { ConfigType } from '@nestjs/config';
 import type { UsersRepositoryInterface } from '../../../dal/interfaces/users-repository.interface';
 import { USERS_REPOSITORY_TOKEN } from '../../../dal/tokens/repository.tokens';
 import { AuthUser } from '../interfaces/auth-user.interface';
+import { UserRole } from '../../../common/enums/user-role.enum';
 import jwtConfig from '../../../config/jwt.config';
 
 export interface JwtPayload {
   sub: number;
   email: string;
   name: string;
-  role: 'admin' | 'user';
+  role: UserRole;
 }
 
 @Injectable()
