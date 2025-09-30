@@ -1,0 +1,76 @@
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: itwebs-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    secrets:
+      - db_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-migrate:
+    build:
+      context: .
+      dockerfile: migrate.Dockerfile
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env.local
+    environment:
+      DB_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    secrets:
+      - db_password
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: itwebs-api
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      NODE_ENV: production
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-migrate:
+        condition: service_completed_successfully
+    secrets:
+      - db_password
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: itwebs-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nestjs_client.html:/usr/share/nginx/html/index.html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
