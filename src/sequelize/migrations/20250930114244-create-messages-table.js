@@ -25,7 +25,7 @@ module.exports = {
     await queryInterface.addIndex('message', ['user_id']);
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface, _) {
     await queryInterface.dropTable('message');
   },
 };

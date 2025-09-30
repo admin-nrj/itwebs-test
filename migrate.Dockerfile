@@ -5,11 +5,11 @@ WORKDIR /usr/src/app
 
 RUN npm install --no-save sequelize sequelize-cli pg dotenv typescript @types/node
 
-COPY src/dal/sequelize.config.ts ./src/dal/
-COPY src/dal/migrations ./src/dal/migrations
+COPY src/sequelize/sequelize.config.ts ./src/sequelize/
+COPY src/sequelize/migrations ./src/sequelize/migrations
 COPY .sequelizerc tsconfig.json ./
 
 # Compile TypeScript to dist directory preserving structure
-RUN npx tsc src/dal/sequelize.config.ts --outDir dist/dal --module commonjs --esModuleInterop --skipLibCheck --declaration false --rootDir src/dal
+RUN npx tsc src/sequelize/sequelize.config.ts --outDir dist/sequelize --module commonjs --esModuleInterop --skipLibCheck --declaration false --rootDir src/sequelize
 
 CMD npx sequelize-cli db:migrate
