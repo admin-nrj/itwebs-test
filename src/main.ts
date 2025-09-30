@@ -1,13 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ConfigService } from '@nestjs/config';
+import { ConfigType } from '@nestjs/config';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import appConfig from './config/app.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService = app.get<ConfigService>(ConfigService);
+  const appCfg = app.get<ConfigType<typeof appConfig>>(appConfig.KEY);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -23,11 +24,9 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
 
   app.enableCors({ origin: '*' });
-  app.setGlobalPrefix(configService.get<string>('app.globalPrefix', 'api'));
+  app.setGlobalPrefix(appCfg.globalPrefix);
 
-  const port = configService.get<number>('app.port', 3003);
-
-  await app.listen(port);
-  Logger.log(`API service listening on port ${port}`, 'Main');
+  await app.listen(appCfg.port);
+  Logger.log(`API service listening on port ${appCfg.port}`, 'Main');
 }
 bootstrap();

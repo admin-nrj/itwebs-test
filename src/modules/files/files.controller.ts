@@ -9,20 +9,23 @@ import {
   ParseIntPipe,
   UseInterceptors,
   UploadedFile,
+  Inject,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { join } from 'path';
 import { FilesService } from './files.service';
 import { FileValidationPipe } from '../../common/pipes/file-validation.pipe';
 import { FileUploadResponseDto } from './dto/file-upload-response.dto';
-import { ConfigService } from '@nestjs/config';
+import type { ConfigType } from '@nestjs/config';
 import { memoryStorage } from 'multer';
+import appConfig from '../../config/app.config';
 
 @Controller('files')
 export class FilesController {
   constructor(
     private readonly filesService: FilesService,
-    private readonly configService: ConfigService,
+    @Inject(appConfig.KEY)
+    private readonly appCfg: ConfigType<typeof appConfig>,
   ) {}
 
   @Post()
@@ -33,7 +36,7 @@ export class FilesController {
     }),
   )
   async upload(@UploadedFile(new FileValidationPipe()) file: Express.Multer.File): Promise<FileUploadResponseDto> {
-    const pathName = join(this.configService.get<string>('app.uploadFolder')!);
+    const pathName = join(this.appCfg.uploadFolder);
     const savedFile = await this.filesService.create(pathName, file.originalname, file.buffer);
 
     return {

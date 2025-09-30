@@ -1,21 +1,22 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { MulterModule } from '@nestjs/platform-express';
-import { ConfigService } from '@nestjs/config';
+import { ConfigType } from '@nestjs/config';
 import { FilesService } from './files.service';
 import { FilesController } from './files.controller';
 import { File } from './entities/file.entity';
 import { FilesRepository } from '../../dal/repositories/files.repository';
 import { FILES_REPOSITORY_TOKEN } from '../../dal/tokens/repository.tokens';
+import appConfig from '../../config/app.config';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([File]),
     MulterModule.registerAsync({
-      useFactory: (configService: ConfigService) => ({
-        dest: configService.get<string>('app.uploadFolder'),
+      useFactory: (appCfg: ConfigType<typeof appConfig>) => ({
+        dest: appCfg.uploadFolder,
       }),
-      inject: [ConfigService],
+      inject: [appConfig.KEY],
     }),
   ],
   controllers: [FilesController],
