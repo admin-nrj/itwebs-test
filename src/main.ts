@@ -41,4 +41,4 @@ async function bootstrap() {
   Logger.log(`API service listening on port ${appCfg.port}`, 'Main');
   Logger.log(`Swagger documentation available at http://localhost:${appCfg.port}/api-docs`, 'Main');
 }
-bootstrap();
+void bootstrap();
