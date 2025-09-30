@@ -16,21 +16,21 @@ export class File extends Model<File, FileCreationAttributes> {
     type: DataType.INTEGER,
     field: 'file_id',
   })
-  fileId: number;
+  declare fileId: number;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
     field: 'path',
   })
-  path: string;
+  declare path: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
     field: 'name',
   })
-  name: string;
+  declare name: string;
 
   declare createdAt: Date;
   declare updatedAt: Date;
