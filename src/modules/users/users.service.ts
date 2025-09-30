@@ -1,22 +1,24 @@
 import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
-import type { ConfigType } from '@nestjs/config';
 import { User } from './entities/user.entity';
 import type { UsersRepositoryInterface } from '../../dal/interfaces/users-repository.interface';
 import { USERS_REPOSITORY_TOKEN } from '../../dal/tokens/repository.tokens';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
-import * as bcrypt from 'bcrypt';
-import appConfig from '../../config/app.config';
+import { CryptoService } from '../../common/crypto/crypto.service';
+import { toDto, toDtoArray } from '../../common/utils/dto.util';
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject(USERS_REPOSITORY_TOKEN)
     private readonly usersRepository: UsersRepositoryInterface,
-    @Inject(appConfig.KEY)
-    private app: ConfigType<typeof appConfig>,
+    private readonly cryptoService: CryptoService,
   ) {}
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findByEmail(email);
+  }
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     const existingUser = await this.usersRepository.findByEmail(createUserDto.email);
@@ -24,20 +26,17 @@ export class UsersService {
       throw new ConflictException(`Пользователь с email ${createUserDto.email} уже существует`);
     }
 
-    const salt = await bcrypt.genSalt(this.app.bcryptSaltRounds);
-    const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
-
     const user = await this.usersRepository.create({
       ...createUserDto,
-      password: hashedPassword,
+      password: await this.cryptoService.hashPassword(createUserDto.password),
     } as User);
 
-    return this.toResponseDto(user);
+    return toDto(UserResponseDto, user);
   }
 
   async findAll(): Promise<UserResponseDto[]> {
     const users = await this.usersRepository.findAll();
-    return users.map((user) => this.toResponseDto(user));
+    return toDtoArray(UserResponseDto, users);
   }
 
   async findOne(userId: number): Promise<UserResponseDto> {
@@ -45,7 +44,7 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`Пользователь с ID ${userId} не найден`);
     }
-    return this.toResponseDto(user);
+    return toDto(UserResponseDto, user);
   }
 
   async update(userId: number, updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
@@ -63,12 +62,11 @@ export class UsersService {
 
     const updateData: Partial<User> = { ...updateUserDto };
     if (updateUserDto.password) {
-      const salt = await bcrypt.genSalt(this.app.bcryptSaltRounds);
-      updateData.password = await bcrypt.hash(updateUserDto.password, salt);
+      updateData.password = await this.cryptoService.hashPassword(updateUserDto.password);
     }
 
     const updatedUser = await this.usersRepository.updateUser(userId, updateData);
-    return this.toResponseDto(updatedUser!);
+    return toDto(UserResponseDto, updatedUser!);
   }
 
   async remove(userId: number): Promise<void> {
@@ -78,17 +76,5 @@ export class UsersService {
     }
 
     await this.usersRepository.updateUser(userId, { ...user, isActive: false });
-  }
-
-  private toResponseDto(user: User): UserResponseDto {
-    return {
-      userId: user.userId,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
   }
 }

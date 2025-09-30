@@ -1,7 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Message } from './entities/message.entity';
 import type { MessagesRepositoryInterface } from '../../dal/interfaces/messages-repository.interface';
 import { MESSAGES_REPOSITORY_TOKEN } from '../../dal/tokens/repository.tokens';
+import { MessageResponseDto } from './dto/message-response.dto';
+import { toDto, toDtoArray } from '../../common/utils/dto.util';
 
 @Injectable()
 export class MessagesService {
@@ -10,16 +11,19 @@ export class MessagesService {
     private readonly messagesRepository: MessagesRepositoryInterface,
   ) {}
 
-  async findAll(): Promise<Message[]> {
-    return await this.messagesRepository.findAll();
+  async findAll(): Promise<MessageResponseDto[]> {
+    const messages = await this.messagesRepository.findAll();
+    return toDtoArray(MessageResponseDto, messages);
   }
 
-  async findOne(id: number): Promise<Message | null> {
-    return await this.messagesRepository.findById(id);
+  async findOne(id: number): Promise<MessageResponseDto | null> {
+    const message = await this.messagesRepository.findById(id);
+    return message ? toDto(MessageResponseDto, message) : null;
   }
 
-  async create(text: string, userId: number): Promise<Message> {
-    return await this.messagesRepository.createMessage(text, userId);
+  async create(text: string, userId: number): Promise<MessageResponseDto> {
+    const message = await this.messagesRepository.createMessage(text, userId);
+    return toDto(MessageResponseDto, message);
   }
 
   async delete(id: number): Promise<boolean> {

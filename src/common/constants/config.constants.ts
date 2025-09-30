@@ -1,0 +1,11 @@
+export const DEFAULT_API_PORT = 3003;
+export const DEFAULT_NODE_ENV = 'development';
+export const PRODUCTION_ENV = 'production';
+export const DEFAULT_GLOBAL_PREFIX = 'api';
+export const DEFAULT_UPLOADS_DIR = 'uploads';
+export const DEFAULT_DB_HOST = 'localhost';
+export const DEFAULT_DB_PORT = 5432;
+export const DEFAULT_DB_USER = 'postgres';
+export const DEFAULT_DB_ADMIN_DATABASE = 'postgres';
+export const PRODUCTION_BCRYPT_SALT_ROUNDS = 10;
+export const NON_PRODUCTION_BCRYPT_SALT_ROUNDS = 4;

@@ -35,7 +35,7 @@ export class UsersRepository implements UsersRepositoryInterface {
   }
 
   async delete(id: number): Promise<boolean> {
-    const result = await this.userModel.destroy({ where: { userId: id } });
-    return result > 0;
+    const [affectedRows] = await this.userModel.update({ isActive: false }, { where: { userId: id } });
+    return affectedRows > 0;
   }
 }

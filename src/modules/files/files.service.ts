@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { File } from './entities/file.entity';
 import type { FilesRepositoryInterface } from '../../dal/interfaces/files-repository.interface';
 import { FILES_REPOSITORY_TOKEN } from '../../dal/tokens/repository.tokens';
+import { FileResponseDto } from './dto/file-response.dto';
+import { toDto, toDtoArray } from '../../common/utils/dto.util';
 import * as fs from 'fs/promises';
 import { join } from 'path';
 
@@ -12,23 +14,25 @@ export class FilesService {
     private readonly filesRepository: FilesRepositoryInterface,
   ) {}
 
-  async create(path: string, name: string, buffer: Buffer): Promise<File> {
+  async create(path: string, name: string, buffer: Buffer): Promise<FileResponseDto> {
     await fs.mkdir(path, { recursive: true });
     const filePath = join(path, name);
     await fs.writeFile(filePath, buffer);
-    return await this.filesRepository.createFile(path, name);
+    const file = await this.filesRepository.createFile(path, name);
+    return toDto(FileResponseDto, file);
   }
 
-  async findAll(): Promise<File[]> {
-    return await this.filesRepository.findAll();
+  async findAll(): Promise<FileResponseDto[]> {
+    const files = await this.filesRepository.findAll();
+    return toDtoArray(FileResponseDto, files);
   }
 
-  async findOne(fileId: number): Promise<File> {
+  async findOne(fileId: number): Promise<FileResponseDto> {
     const file = await this.filesRepository.findById(fileId);
     if (!file) {
       throw new NotFoundException(`Файл с ID ${fileId} не найден`);
     }
-    return file;
+    return toDto(FileResponseDto, file);
   }
 
   async remove(fileId: number): Promise<void> {

@@ -3,19 +3,13 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
-import { UsersRepository } from '../../dal/repositories/users.repository';
-import { USERS_REPOSITORY_TOKEN } from '../../dal/tokens/repository.tokens';
+import { DalModule } from '../../dal';
+import { CryptoModule } from '../../common/crypto/crypto.module';
 
 @Module({
-  imports: [SequelizeModule.forFeature([User])],
+  imports: [DalModule, CryptoModule],
   controllers: [UsersController],
-  providers: [
-    UsersService,
-    {
-      provide: USERS_REPOSITORY_TOKEN,
-      useClass: UsersRepository,
-    },
-  ],
+  providers: [UsersService],
   exports: [UsersService],
 })
 export class UsersModule {}

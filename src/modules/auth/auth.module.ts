@@ -7,11 +7,9 @@ import { AuthController } from './auth.controller';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
-import { UsersRepository } from '../../dal/repositories/users.repository';
-import { USERS_REPOSITORY_TOKEN } from '../../dal/tokens/repository.tokens';
-import { SequelizeModule } from '@nestjs/sequelize';
-import { User } from '../users/entities/user.entity';
 import jwtConfig from '../../config/jwt.config';
+import { CryptoModule } from '../../common/crypto/crypto.module';
+import { DalModule } from '../../dal';
 
 @Module({
   imports: [
@@ -24,19 +22,12 @@ import jwtConfig from '../../config/jwt.config';
       }),
       inject: [jwtConfig.KEY],
     }),
-    SequelizeModule.forFeature([User]),
     UsersModule,
+    CryptoModule,
+    DalModule,
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    LocalStrategy,
-    JwtStrategy,
-    {
-      provide: USERS_REPOSITORY_TOKEN,
-      useClass: UsersRepository,
-    },
-  ],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
