@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
-import { SequelizeModule } from '@nestjs/sequelize';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { User } from './entities/user.entity';
 import { DalModule } from '../../dal';
 import { CryptoModule } from '../../common/crypto/crypto.module';
 

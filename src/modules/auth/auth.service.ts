@@ -8,6 +8,7 @@ import { UserRole } from '../../common/enums/user-role.enum';
 import { CryptoService } from '../../common/crypto/crypto.service';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import { UserResponseDto } from '../users/dto/user-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -49,7 +50,7 @@ export class AuthService {
       role: UserRole.USER,
     };
 
-    let userDto;
+    let userDto: UserResponseDto;
     try {
       userDto = await this.usersService.create(createUserDto);
     } catch (error) {
