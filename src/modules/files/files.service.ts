@@ -32,9 +32,20 @@ export class FilesService {
   }
 
   async remove(fileId: number): Promise<void> {
-    const deleted = await this.filesRepository.delete(fileId);
-    if (!deleted) {
+    const file = await this.filesRepository.findById(fileId);
+    if (!file) {
       throw new NotFoundException(`Файл с ID ${fileId} не найден`);
     }
+
+    const filePath = join(file.path, file.name);
+    try {
+      await fs.unlink(filePath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw error;
+      }
+    }
+
+    await this.filesRepository.delete(fileId);
   }
 }
