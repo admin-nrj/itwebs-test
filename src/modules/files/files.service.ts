@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { File } from './entities/file.entity';
 import type { FilesRepositoryInterface } from '../../dal/interfaces/files-repository.interface';
 import { FILES_REPOSITORY_TOKEN } from '../../dal/tokens/repository.tokens';
+import * as fs from 'fs/promises';
+import { join } from 'path';
 
 @Injectable()
 export class FilesService {
@@ -10,7 +12,10 @@ export class FilesService {
     private readonly filesRepository: FilesRepositoryInterface,
   ) {}
 
-  async create(path: string, name: string): Promise<File> {
+  async create(path: string, name: string, buffer: Buffer): Promise<File> {
+    await fs.mkdir(path, { recursive: true });
+    const filePath = join(path, name);
+    await fs.writeFile(filePath, buffer);
     return await this.filesRepository.createFile(path, name);
   }
 

@@ -16,8 +16,7 @@ import { FilesService } from './files.service';
 import { FileValidationPipe } from '../../common/pipes/file-validation.pipe';
 import { FileUploadResponseDto } from './dto/file-upload-response.dto';
 import { ConfigService } from '@nestjs/config';
-import { diskStorage } from 'multer';
-import e from 'express';
+import { memoryStorage } from 'multer';
 
 @Controller('files')
 export class FilesController {
@@ -30,16 +29,12 @@ export class FilesController {
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        filename(_: e.Request, file: Express.Multer.File, callback: (error: Error | null, filename: string) => void) {
-          callback(null, file.originalname);
-        },
-      }),
+      storage: memoryStorage(),
     }),
   )
   async upload(@UploadedFile(new FileValidationPipe()) file: Express.Multer.File): Promise<FileUploadResponseDto> {
     const pathName = join(this.configService.get<string>('app.uploadFolder')!);
-    const savedFile = await this.filesService.create(pathName, file.originalname);
+    const savedFile = await this.filesService.create(pathName, file.originalname, file.buffer);
 
     return {
       fileId: savedFile.fileId,
