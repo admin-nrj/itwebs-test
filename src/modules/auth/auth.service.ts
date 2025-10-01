@@ -1,14 +1,17 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import type { ConfigType } from '@nestjs/config';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
+import { JwtRefreshPayload } from './strategies/jwt-refresh.strategy';
 import { AuthUser } from './interfaces/auth-user.interface';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { CryptoService } from '../../common/crypto/crypto.service';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
+import jwtConfig from '../../config/jwt.config';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +19,8 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly cryptoService: CryptoService,
+    @Inject(jwtConfig.KEY)
+    private readonly jwt: ConfigType<typeof jwtConfig>,
   ) {}
 
   async validateUser(email: string, password: string): Promise<AuthUser | null> {
@@ -42,6 +47,31 @@ export class AuthService {
     };
   }
 
+  private generateTokens(user: { userId: number; email: string; name: string; role: UserRole }) {
+    const accessPayload: JwtPayload = {
+      sub: user.userId,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
+
+    const refreshPayload: JwtRefreshPayload = {
+      sub: user.userId,
+      email: user.email,
+    };
+
+    return {
+      accessToken: this.jwtService.sign(accessPayload, {
+        secret: this.jwt.secret,
+        expiresIn: this.jwt.expiresIn,
+      }),
+      refreshToken: this.jwtService.sign(refreshPayload, {
+        secret: this.jwt.refreshSecret,
+        expiresIn: this.jwt.refreshExpiresIn,
+      }),
+    };
+  }
+
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const createUserDto: CreateUserDto = {
       name: registerDto.email.split('@')[0],
@@ -60,15 +90,10 @@ export class AuthService {
       throw new ConflictException(`Пользователь с email ${registerDto.email} уже существует`);
     }
 
-    const payload: JwtPayload = {
-      sub: userDto.userId,
-      email: userDto.email,
-      name: userDto.name,
-      role: userDto.role,
-    };
+    const tokens = this.generateTokens(userDto);
 
     return {
-      accessToken: this.jwtService.sign(payload),
+      ...tokens,
       user: {
         userId: userDto.userId,
         email: userDto.email,
@@ -78,22 +103,46 @@ export class AuthService {
     };
   }
 
-  async login(user: AuthUser): Promise<AuthResponseDto> {
-    const payload: JwtPayload = {
-      sub: user.userId,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    };
+  login(user: AuthUser): AuthResponseDto {
+    const tokens = this.generateTokens(user);
 
-    return Promise.resolve({
-      accessToken: this.jwtService.sign(payload),
+    return {
+      ...tokens,
       user: {
         userId: user.userId,
         email: user.email,
         name: user.name,
         role: user.role,
       },
+    };
+  }
+
+  async refreshTokens(userId: number, email: string): Promise<AuthResponseDto> {
+    const user = await this.usersService.findByEmail(email);
+
+    if (!user || user.userId !== userId) {
+      throw new UnauthorizedException('Невалидный refresh токен');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Учетная запись деактивирована');
+    }
+
+    const tokens = this.generateTokens({
+      userId: user.userId,
+      email: user.email,
+      name: user.name,
+      role: user.role,
     });
+
+    return {
+      ...tokens,
+      user: {
+        userId: user.userId,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    };
   }
 }

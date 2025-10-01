@@ -1,7 +1,8 @@
-import { Controller, Post, UseGuards, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Controller, Post, UseGuards, Body, HttpCode, HttpStatus, Get } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from '../../common/guards/local-auth.guard';
+import { JwtRefreshAuthGuard } from '../../common/guards/jwt-refresh-auth.guard';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -38,7 +39,18 @@ export class AuthController {
   })
   @ApiResponse({ status: 200, description: 'Успешная авторизация', type: AuthResponseDto })
   @ApiResponse({ status: 401, description: 'Неверные учетные данные' })
-  async login(@CurrentUser() user: AuthUser): Promise<AuthResponseDto> {
+  login(@CurrentUser() user: AuthUser): AuthResponseDto {
     return this.authService.login(user);
+  }
+
+  @UseGuards(JwtRefreshAuthGuard)
+  @Get('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Обновление access токена с помощью refresh токена' })
+  @ApiResponse({ status: 200, description: 'Токены успешно обновлены', type: AuthResponseDto })
+  @ApiResponse({ status: 401, description: 'Невалидный refresh токен' })
+  async refresh(@CurrentUser() user: { userId: number; email: string }): Promise<AuthResponseDto> {
+    return this.authService.refreshTokens(user.userId, user.email);
   }
 }
